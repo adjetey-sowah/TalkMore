@@ -1,4 +1,4 @@
-name: Build and Push Docker Image
+name: Build and Push to Public ECR
 
 on:
   push:
@@ -8,43 +8,36 @@ on:
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
-
     steps:
-      # Check out the repository code
+      # 1) Check out your code
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      # Configure AWS credentials for subsequent AWS CLI commands and ECR login
+      # 2) Configure AWS Credentials (make sure to use us-east-1 for Public ECR)
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v2
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: us-west-2
+          aws-region: us-east-1
 
-      # Login to Amazon ECR Public (uses the AWS-provided action for public registries)
-      - name: Login to Amazon ECR (Private)
-        run: |
-          aws ecr get-login-password --region us-west-2 \
-            | docker login --username AWS --password-stdin 650251709711.dkr.ecr.us-west-2.amazonaws.com
+      # 3) Login to Amazon ECR Public
+      - name: Login to Amazon ECR Public
+        uses: aws-actions/amazon-ecr-login@v1
+        with:
+          registry-type: public
 
-      # Build the Docker image (assumes a Dockerfile in the repository root)
+      # 4) Build the Docker image (using a Dockerfile in the repo root)
       - name: Build Docker Image
         run: |
-          docker build -t silentwhisperer .
+          docker build -t week4-lab1 .
 
-      # Tag the Docker image using your desired format
+      # 5) Tag the Docker image with your public ECR repo name
       - name: Tag Docker Image
-        env:
-          ECR_REGISTRY: public.ecr.aws/your_ecr_repo_uri  # Replace with your ECR repository URI
-          IMAGE_NAME: silentwhisperer
         run: |
-          docker tag giftedlabs/wk4-lab1:latest $ECR_REGISTRY/$IMAGE_NAME:latest
+          docker tag week4-lab1:latest public.ecr.aws/r1b3l1w9/week4-lab1:latest
 
-      # Push the Docker image to your public ECR repository
-      - name: Push Docker Image to ECR Public
-        env:
-          ECR_REGISTRY: 650251709711.dkr.ecr.us-west-2.amazonaws.com  # Replace with your ECR repository URI
-          IMAGE_NAME: silentwhisperer
+      # 6) Push the Docker image to your public ECR repository
+      - name: Push Docker Image
         run: |
-          docker push $ECR_REGISTRY/$IMAGE_NAME:latest
+          docker push public.ecr.aws/r1b3l1w9/week4-lab1:latest
