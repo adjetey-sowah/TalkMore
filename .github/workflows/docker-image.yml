@@ -23,10 +23,10 @@ jobs:
           aws-region: us-west-2
 
       # Login to Amazon ECR Public (uses the AWS-provided action for public registries)
-      - name: Login to Amazon ECR Public
-        uses: aws-actions/amazon-ecr-login@v1
-        with:
-          registry-type: public
+      - name: Login to Amazon ECR (Private)
+        run: |
+          aws ecr get-login-password --region us-west-2 \
+            | docker login --username AWS --password-stdin 650251709711.dkr.ecr.us-west-2.amazonaws.com
 
       # Build the Docker image (assumes a Dockerfile in the repository root)
       - name: Build Docker Image
